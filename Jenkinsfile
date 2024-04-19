@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        //be sure to replace "saransdp" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "saransdp/train-schedule"
+        //be sure to replace "willbla" with your own Docker Hub username
+        DOCKER_IMAGE_NAME = "willbla/train-schedule"
     }
     stages {
         stage('Build') {
@@ -31,27 +31,26 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'githubkey1') {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
                         app.push("${env.BUILD_NUMBER}")
                         app.push("latest")
                     }
                 }
             }
         }
-        stage('CanaryDeploy'){
+        stage('CanaryDeploy') {
             when {
                 branch 'master'
             }
-            environment {
+            environment { 
                 CANARY_REPLICAS = 1
             }
             steps {
-                kubernetesDeploy (
+                kubernetesDeploy(
                     kubeconfigId: 'kubeconfig',
                     configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: True
+                    enableConfigSubstitution: true
                 )
-                }
             }
         }
         stage('DeployToProduction') {
@@ -64,7 +63,7 @@ pipeline {
             steps {
                 input 'Deploy to Production?'
                 milestone(1)
-                 kubernetesDeploy(
+                kubernetesDeploy(
                     kubeconfigId: 'kubeconfig',
                     configs: 'train-schedule-kube-canary.yml',
                     enableConfigSubstitution: true
@@ -77,3 +76,4 @@ pipeline {
             }
         }
     }
+}
